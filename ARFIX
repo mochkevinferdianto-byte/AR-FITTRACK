@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Fitness Counter — FINAL MODE (All + High Knees + Biceps)</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#60a5fa;--muted:#94a3b8;--glass:rgba(255,255,255,0.04)}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui}
+    body{
+      background:linear-gradient(180deg,#071029 0%, #071827 100%);
+      color:#e6eef8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      min-height:100vh;
+      overflow:auto;
+    }
+    .app{
+      width:1400px;
+      max-width:100%;
+      display:grid;
+      grid-template-columns:720px 1fr 320px;
+      gap:20px;
+      margin:auto;
+    }
+    .card{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 6px 30px rgba(2,6,23,0.6);backdrop-filter:blur(6px)}
+    .cameraWrap{position:relative;border-radius:12px;overflow:hidden;height:540px;background:var(--glass);display:flex;align-items:center;justify-content:center}
+    video, canvas{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
+    canvas.overlay{pointer-events:none}
+    .panel{display:flex;flex-direction:column;gap:12px}
+    .row{display:flex;gap:12px;align-items:center}
+    .stat{background:rgba(255,255,255,0.04);padding:12px;border-radius:12px;flex:1;min-height:80px}
+    .stat h3{margin:0;font-size:14px;color:var(--muted)}
+    .stat p{margin:6px 0 0;font-size:26px;font-weight:700}
+    .controls{display:flex;gap:10px;flex-wrap:wrap}
+
+    button{
+      background:linear-gradient(90deg,var(--accent),#3b82f6);
+      border:0;padding:10px 14px;border-radius:10px;
+      color:#071827;font-weight:700;cursor:pointer;
+      transition: transform 0.2s;
+    }
+
+    button:hover{
+      transform:scale(1.05);
+    }
+
+    .ghost{
+      background:transparent;border:1px solid rgba(255,255,255,0.06);
+      color:var(--muted);font-weight:600
+    }
+
+    /* MODE ACTIVE BUTTON */
+    .modeActive{
+      background:linear-gradient(90deg,#60a5fa,#3b82f6) !important;
+      color:#071827 !important;
+      border:none !important;
+      font-weight:700 !important;
+    }
+
+    .warningBox{
+      background:linear-gradient(90deg,#ffe7d3,#ffdede);
+      color:#571010;padding:12px;border-radius:10px;
+      margin-top:10px;font-weight:700;
+    }
+    .warningBox button{
+      margin-left:10px;padding:6px 12px;border-radius:8px;border:0;
+      cursor:pointer;font-weight:700;
+    }
+
+    .tiredBox{
+      background:linear-gradient(90deg,#d3e8ff,#e0f0ff);
+      color:#0a2345;padding:12px;border-radius:10px;
+      margin-top:10px;font-weight:700;
+    }
+    .tiredBox button{
+      margin-left:10px;padding:6px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700;
+    }
+
+    .log{margin-top:12px;font-size:13px;color:var(--muted);max-height:160px;overflow:auto}
+    .modeLabel{font-size:13px;color:var(--muted);margin-top:6px}
+    
+    /* YouTube Panel Styles */
+    .youtube-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .youtube-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .youtube-header h3 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 16px;
+    }
+    
+    .youtube-icon {
+      width: 24px;
+      height: 24px;
+      background: #ff0000;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    
+    .youtube-player {
+      width: 100%;
+      height: 180px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--glass);
+    }
+    
+    .youtube-player iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    .youtube-playlist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .youtube-item {
+      display: flex;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .youtube-item:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    
+    .youtube-thumbnail {
+      width: 80px;
+      height: 60px;
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    
+    .youtube-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .youtube-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .youtube-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      color: #e6eef8;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-origin: vertical;
+      overflow: hidden;
+    }
+    
+    .youtube-channel {
+      font-size: 10px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .youtube-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .youtube-controls button {
+      padding: 6px 12px;
+      font-size: 12px;
+      flex: 1;
+    }
+    
+    /* Responsif untuk layar lebih kecil */
+    @media (max-width: 1400px) {
+      .app {
+        grid-template-columns: 1fr 320px;
+        width: 95%;
+      }
+      .cameraWrap {
+        height: 400px;
+      }
+    }
+    
+    @media (max-width: 1200px) {
+      .app {
+        grid-template-columns: 1fr;
+        width: 95%;
+      }
+      .cameraWrap {
+        height: 400px;
+      }
+      .youtube-panel {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      .app {
+        gap: 16px;
+      }
+      .cameraWrap {
+        height: 300px;
+      }
+      .row {
+        flex-direction: column;
+      }
+      .controls {
+        justify-content: center;
+      }
+      button {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="card cameraWrap">
+    <video id="video" playsinline muted autoplay></video>
+    <canvas id="output" class="overlay"></canvas>
+    <canvas id="debug" style="display:none"></canvas>
+  </div>
+
+  <div class="card panel">
+
+    <!-- MODE BUTTONS -->
+    <div class="controls">
+      <button id="modePushBtn" class="ghost">Push-up</button>
+      <button id="modeJumpBtn" class="ghost">Jumping Jack</button>
+      <button id="modeSquatBtn" class="ghost">Squat Jump</button>
+      <button id="modeHighKneesBtn" class="ghost">High Knees</button>
+      <button id="modeBicepsBtn" class="ghost">Biceps Curl</button>
+      <button id="modeAllBtn" class="ghost">Semua Mode</button>
+    </div>
+
+    <div class="modeLabel" id="modeLabel">Mode: Push-up (default)</div>
+
+    <div class="row">
+      <div class="stat"><h3>Push-up</h3><p id="pushCount">0</p></div>
+      <div class="stat"><h3>Jumping Jack</h3><p id="jumpCount">0</p></div>
+    </div>
+
+    <div class="row">
+      <div class="stat"><h3>Squat Jump</h3><p id="squatCount">0</p></div>
+      <div class="stat"><h3>High Knees</h3><p id="highKneeCount">0</p></div>
+    </div>
+
+    <div class="row">
+      <div class="stat"><h3>Biceps Curl</h3><p id="bicepsCount">0</p></div>
+      <div class="stat"><h3>Timer</h3><p id="timer">00:00</p></div>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn">Start</button>
+      <button id="pauseBtn" class="ghost">Pause</button>
+      <button id="resetBtn" class="ghost">Reset</button>
+    </div>
+
+    <div id="waveWarningContainer"></div>
+    <div id="tiredWarningContainer"></div>
+    <div id="emergencyWarningContainer"></div>
+
+    <div class="log" id="log">Instruksi: Izinkan kamera…</div>
+  </div>
+
+  <!-- YouTube Panel -->
+  <div class="card youtube-panel">
+    <div class="youtube-header">
+      <div class="youtube-icon">YT</div>
+      <h3>Lagu Santai Workout</h3>
+    </div>
+    
+    <div class="youtube-player">
+      <iframe 
+        id="youtubePlayer"
+        src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&mute=1&enablejsapi=1" 
+        title="YouTube video player" 
+        frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <div class="youtube-controls">
+      <button id="playBtn" class="ghost">▶ Play</button>
+      <button id="pauseYtBtn" class="ghost">⏸ Pause</button>
+      <button id="muteBtn" class="ghost">🔇 Mute</button>
+    </div>
+    
+    <div class="youtube-playlist">
+      <!-- Lagu 1 -->
+      <div class="youtube-item" onclick="changeVideo('jfKfPfyJRdk', 'lofi hip hop radio 📚 - beats to relax/study to')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/jfKfPfyJRdk/mqdefault.jpg" alt="Lofi Hip Hop">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">lofi hip hop radio 📚 - beats to relax/study to</p>
+          <p class="youtube-channel">Lofi Girl</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 2 -->
+      <div class="youtube-item" onclick="changeVideo('5qap5aO4i9A', 'lofi hip hop radio - beats to relax/study to')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/5qap5aO4i9A/mqdefault.jpg" alt="Lofi Hip Hop">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">lofi hip hop radio - beats to relax/study to</p>
+          <p class="youtube-channel">ChilledCow</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 3 -->
+      <div class="youtube-item" onclick="changeVideo('DWcJFNfaw9c', 'Peaceful Piano & Soft Rain')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/DWcJFNfaw9c/mqdefault.jpg" alt="Piano & Rain">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">Peaceful Piano & Soft Rain</p>
+          <p class="youtube-channel">Soothing Relaxation</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 4 -->
+      <div class="youtube-item" onclick="changeVideo('mLbf2fnv5-o', 'Jazz Relaxing Music')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/mLbf2fnv5-o/mqdefault.jpg" alt="Jazz Relaxing">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">Jazz Relaxing Music</p>
+          <p class="youtube-channel">Relax Music</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 5 -->
+      <div class="youtube-item" onclick="changeVideo('7NOSDKb0HlU', 'Ambient Study Music')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/7NOSDKb0HlU/mqdefault.jpg" alt="Ambient Study">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">Ambient Study Music</p>
+          <p class="youtube-channel">College Music</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 6 -->
+      <div class="youtube-item" onclick="changeVideo('rUxyKA_-grg', 'Calm Piano Music')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/rUxyKA_-grg/mqdefault.jpg" alt="Calm Piano">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">Calm Piano Music</p>
+          <p class="youtube-channel">Piano Relax</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 7 -->
+      <div class="youtube-item" onclick="changeVideo('4oStw0fVj1c', 'Chillhop Essentials')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/4oStw0fVj1c/mqdefault.jpg" alt="Chillhop">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">Chillhop Essentials</p>
+          <p class="youtube-channel">Chillhop Music</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 8 -->
+      <div class="youtube-item" onclick="changeVideo('bP9g4PLqlYw', 'Relaxing Guitar Music')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/bP9g4PLqlYw/mqdefault.jpg" alt="Guitar Relax">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">Relaxing Guitar Music</p>
+          <p class="youtube-channel">Guitar Relaxation</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 9 -->
+      <div class="youtube-item" onclick="changeVideo('kgx4WGK0oNU', 'Deep Focus Music')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/kgx4WGK0oNU/mqdefault.jpg" alt="Deep Focus">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">Deep Focus Music</p>
+          <p class="youtube-channel">Focus Music</p>
+        </div>
+      </div>
+      
+      <!-- Lagu 10 -->
+      <div class="youtube-item" onclick="changeVideo('Meeb1QpK2y8', 'Tropical House Mix')">
+        <div class="youtube-thumbnail">
+          <img src="https://img.youtube.com/vi/Meeb1QpK2y8/mqdefault.jpg" alt="Tropical House">
+        </div>
+        <div class="youtube-info">
+          <p class="youtube-title">Tropical House Mix</p>
+          <p class="youtube-channel">Tropical Vibes</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+<script>
+/* ----------- YOUTUBE PLAYER SETUP ----------- */
+let youtubePlayer;
+let currentVideoId = 'jfKfPfyJRdk';
+
+function onYouTubeIframeAPIReady() {
+  youtubePlayer = new YT.Player('youtubePlayer', {
+    height: '180',
+    width: '100%',
+    videoId: currentVideoId,
+    playerVars: {
+      'autoplay': 1,
+      'mute': 1,
+      'enablejsapi': 1,
+      'controls': 1,
+      'rel': 0,
+      'modestbranding': 1
+    },
+    events: {
+      'onReady': onPlayerReady,
+      'onStateChange': onPlayerStateChange,
+      'onError': onPlayerError
+    }
+  });
+}
+
+function onPlayerReady(event) {
+  log('YouTube Player siap');
+  // Player sudah otomatis play karena autoplay=1
+}
+
+function onPlayerStateChange(event) {
+  // Bisa tambahkan logika tambahan di sini jika perlu
+}
+
+function onPlayerError(event) {
+  log('Error YouTube Player: Video tidak tersedia, mengganti ke video lain...');
+  // Ganti ke video alternatif jika video saat ini error
+  changeVideo('jfKfPfyJRdk', 'lofi hip hop radio 📚 - beats to relax/study to');
+}
+
+/* ----------- YOUTUBE CONTROL FUNCTIONS ----------- */
+function changeVideo(videoId, title) {
+  if (youtubePlayer && youtubePlayer.loadVideoById) {
+    try {
+      youtubePlayer.loadVideoById(videoId);
+      currentVideoId = videoId;
+      log(`Video YouTube diganti: ${title}`);
+    } catch (error) {
+      log('Error mengganti video, coba video alternatif...');
+      // Fallback ke video yang pasti tersedia
+      youtubePlayer.loadVideoById('jfKfPfyJRdk');
+      currentVideoId = 'jfKfPfyJRdk';
+    }
+  } else {
+    // Fallback jika YouTube API belum siap
+    const iframe = document.getElementById('youtubePlayer');
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&enablejsapi=1`;
+    currentVideoId = videoId;
+  }
+}
+
+function playVideo() {
+  if (youtubePlayer && youtubePlayer.playVideo) {
+    try {
+      youtubePlayer.playVideo();
+      log('YouTube: Memutar video');
+    } catch (error) {
+      log('Error memutar video YouTube');
+    }
+  }
+}
+
+function pauseVideo() {
+  if (youtubePlayer && youtubePlayer.pauseVideo) {
+    try {
+      youtubePlayer.pauseVideo();
+      log('YouTube: Menjeda video');
+    } catch (error) {
+      log('Error menjeda video YouTube');
+    }
+  }
+}
+
+function toggleMute() {
+  if (youtubePlayer) {
+    try {
+      if (youtubePlayer.isMuted()) {
+        youtubePlayer.unMute();
+        document.getElementById('muteBtn').textContent = '🔇 Mute';
+        log('YouTube: Suara dihidupkan');
+      } else {
+        youtubePlayer.mute();
+        document.getElementById('muteBtn').textContent = '🔊 Unmute';
+        log('YouTube: Suara dimatikan');
+      }
+    } catch (error) {
+      log('Error mengatur mute YouTube');
+    }
+  }
+}
+
+// Event listeners untuk kontrol YouTube
+document.getElementById('playBtn').addEventListener('click', playVideo);
+document.getElementById('pauseYtBtn').addEventListener('click', pauseVideo);
+document.getElementById('muteBtn').addEventListener('click', toggleMute);
+
+/* ----------- LOG ----------- */
+const logEl = document.getElementById('log');
+function log(s){ const p=document.createElement('div');p.textContent=(new Date()).toLocaleTimeString()+" — "+s;logEl.prepend(p); }
+
+/* ----------- TIME ----------- */
+function formatTime(s){ const mm=String(Math.floor(s/60)).padStart(2,'0');const ss=String(s%60).padStart(2,'0');return mm+':'+ss }
+
+/* ----------- ELEMENTS ----------- */
+const video=document.getElementById('video');
+const canvas=document.getElementById('output'); const ctx=canvas.getContext('2d');
+const debug=document.getElementById('debug'); const dctx=debug.getContext('2d');
+
+const pushCountEl=document.getElementById('pushCount');
+const jumpCountEl=document.getElementById('jumpCount');
+const squatCountEl=document.getElementById('squatCount');
+const highKneeCountEl=document.getElementById('highKneeCount');
+const bicepsCountEl=document.getElementById('bicepsCount');
+const timerEl=document.getElementById('timer');
+
+const startBtn=document.getElementById('startBtn');
+const pauseBtn=document.getElementById('pauseBtn');
+const resetBtn=document.getElementById('resetBtn');
+
+const waveWarningContainer=document.getElementById('waveWarningContainer');
+const tiredWarningContainer=document.getElementById('tiredWarningContainer');
+const emergencyWarningContainer=document.getElementById('emergencyWarningContainer');
+
+const modePushBtn=document.getElementById('modePushBtn');
+const modeJumpBtn=document.getElementById('modeJumpBtn');
+const modeSquatBtn=document.getElementById('modeSquatBtn');
+const modeHighKneesBtn=document.getElementById('modeHighKneesBtn');
+const modeBicepsBtn=document.getElementById('modeBicepsBtn');
+const modeAllBtn=document.getElementById('modeAllBtn');
+const modeLabel = document.getElementById('modeLabel');
+
+/* ----------- STATES ----------- */
+let running=false;
+let pushCount=0,jumpCount=0,squatCount=0,highKneeCount=0,bicepsCount=0;
+let startTime=null,elapsed=0,timerInterval=null;
+let cam=null;
+let mode="push"; // push / jump / squat / highknees / biceps / all
+
+let baselineY=null;
+let baselineInitSamples=0;
+let baselineSum=0;
+
+let pushState='up',jumpState='down',squatState='up';
+let leftHigh=false,rightHigh=false, leftHighState='down', rightHighState='down';
+let leftBicepsState='down', rightBicepsState='down';
+let frameLocked=false,lockTimer=0;
+
+let lastHandsResult=null;
+let tiredPopupShown=false;
+let fallDetected=false; // Tambahan state untuk deteksi jatuh
+
+/* ----------- UI MODE HANDLERS ----------- */
+function clearModeActive(){
+  [modePushBtn,modeJumpBtn,modeSquatBtn,modeHighKneesBtn,modeBicepsBtn,modeAllBtn].forEach(b=>b.classList.remove('modeActive'));
+}
+function setMode(m){
+  mode=m;
+  pushState='up'; jumpState='down'; squatState='up';
+  leftHighState='down'; rightHighState='down';
+  leftBicepsState='down'; rightBicepsState='down';
+  frameLocked=false; lockTimer=0;
+  clearModeActive();
+  if(m==="push") modePushBtn.classList.add("modeActive");
+  if(m==="jump") modeJumpBtn.classList.add("modeActive");
+  if(m==="squat") modeSquatBtn.classList.add("modeActive");
+  if(m==="highknees") modeHighKneesBtn.classList.add("modeActive");
+  if(m==="biceps") modeBicepsBtn.classList.add("modeActive");
+  if(m==="all") modeAllBtn.classList.add("modeActive");
+  modeLabel.textContent = "Mode: " + (m==="all" ? "Semua Mode" : m.charAt(0).toUpperCase()+m.slice(1));
+  log("Mode diganti ke: " + m);
+}
+modePushBtn.onclick=()=>setMode("push");
+modeJumpBtn.onclick=()=>setMode("jump");
+modeSquatBtn.onclick=()=>setMode("squat");
+modeHighKneesBtn.onclick=()=>setMode("highknees");
+modeBicepsBtn.onclick=()=>setMode("biceps");
+modeAllBtn.onclick=()=>setMode("all");
+
+/* ----------- TIMER ----------- */
+function startTimer(){ if(timerInterval) return; startTime=Date.now()-elapsed*1000; timerInterval=setInterval(()=>{ elapsed=Math.floor((Date.now()-startTime)/1000); timerEl.textContent=formatTime(elapsed); },300); }
+function stopTimer(){ if(timerInterval){ clearInterval(timerInterval); timerInterval=null; } }
+
+/* ----------- RESET ----------- */
+function resetAll(){
+  pushCount=0; jumpCount=0; squatCount=0; highKneeCount=0; bicepsCount=0;
+  pushCountEl.textContent='0'; jumpCountEl.textContent='0'; squatCountEl.textContent='0';
+  highKneeCountEl.textContent='0'; bicepsCountEl.textContent='0';
+  elapsed=0; timerEl.textContent='00:00'; startTime=null; stopTimer();
+  baselineY=null; baselineInitSamples=0; baselineSum=0;
+  pushState='up'; jumpState='down'; squatState='up';
+  leftHighState='down'; rightHighState='down';
+  leftBicepsState='down'; rightBicepsState='down';
+  frameLocked=false; lockTimer=0;
+  fallDetected=false; // Reset deteksi jatuh
+  waveWarningContainer.innerHTML=''; tiredWarningContainer.innerHTML=''; emergencyWarningContainer.innerHTML='';
+  running=false; startBtn.textContent='Start';
+  log('Reset semua penghitung.');
+}
+
+/* ----------- MEDIAPIPE SETUP ----------- */
+const pose = new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+pose.setOptions({modelComplexity:0,smoothLandmarks:true,minDetectionConfidence:0.45,minTrackingConfidence:0.45});
+pose.onResults(onResults);
+
+const hands = new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+hands.setOptions({maxNumHands:2,minDetectionConfidence:0.45,minTrackingConfidence:0.45});
+hands.onResults(r=> lastHandsResult = r);
+
+/* ----------- CAMERA ----------- */
+let CAMERA_WIDTH=660, CAMERA_HEIGHT=360;
+function startCamera(){
+  canvas.width=document.querySelector('.cameraWrap').clientWidth;
+  canvas.height=document.querySelector('.cameraWrap').clientHeight;
+
+  if(cam){ log("Camera sudah berjalan."); return; }
+
+  cam = new Camera(video, {
+    onFrame: async ()=>{
+      if(video.readyState < 2) return;
+      try{ await pose.send({image:video}); }catch(e){}
+      try{ await hands.send({image:video}); }catch(e){}
+    },
+    width: CAMERA_WIDTH, height: CAMERA_HEIGHT
+  });
+  cam.start().then(()=>log("Kamera dimulai")).catch(e=>log("Gagal memulai kamera: "+e));
+}
+
+/* ----------- UTILS ----------- */
+function getPt(lm){ return {x: lm.x * canvas.width, y: lm.y * canvas.height, z: lm.z}; }
+function angleDeg(a,b,c){
+  const ab = {x: a.x - b.x, y: a.y - b.y};
+  const cb = {x: c.x - b.x, y: c.y - b.y};
+  const dot = ab.x*cb.x + ab.y*cb.y;
+  const magAB = Math.hypot(ab.x,ab.y) || 1e-6;
+  const magCB = Math.hypot(cb.x,cb.y) || 1e-6;
+  const v = Math.max(-1, Math.min(1, dot/(magAB*magCB)));
+  return Math.acos(v) * (180/Math.PI);
+}
+
+/* ----------- DETEKSI JATUH ----------- */
+function detectFall(lm) {
+  if (!lm) return false;
+  
+  const nose = getPt(lm[0]);
+  const leftShoulder = getPt(lm[11]), rightShoulder = getPt(lm[12]);
+  const leftHip = getPt(lm[23]), rightHip = getPt(lm[24]);
+  const leftKnee = getPt(lm[25]), rightKnee = getPt(lm[26]);
+  
+  const shoulder = { x: (leftShoulder.x + rightShoulder.x)/2, y: (leftShoulder.y + rightShoulder.y)/2 };
+  const hip = { x: (leftHip.x + rightHip.x)/2, y: (leftHip.y + rightHip.y)/2 };
+  const knee = { x: (leftKnee.x + rightKnee.x)/2, y: (leftKnee.y + rightKnee.y)/2 };
+  
+  // Deteksi 1: Posisi horizontal (jatuh ke samping)
+  const bodyHorizontal = Math.abs(shoulder.y - hip.y) < canvas.height * 0.05;
+  
+  // Deteksi 2: Posisi sangat rendah (jatuh ke bawah)
+  const bodyVeryLow = nose.y > canvas.height * 0.8 && hip.y > canvas.height * 0.7;
+  
+  // Deteksi 3: Perbedaan tinggi antara bahu dan pinggang sangat kecil (posisi tidur)
+  const shoulderHipDiff = Math.abs(shoulder.y - hip.y);
+  const lyingDown = shoulderHipDiff < canvas.height * 0.03;
+  
+  // Deteksi 4: Kepala di bawah pinggang (posisi terbalik)
+  const headBelowHips = nose.y > hip.y + canvas.height * 0.1;
+  
+  return (bodyHorizontal || bodyVeryLow || lyingDown || headBelowHips);
+}
+
+/* ----------- MAIN onResults ----------- */
+function onResults(results){
+  if(!video.videoWidth) return;
+  ctx.save();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
+
+  if(results.poseLandmarks){
+    drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color:'#00e5ff', lineWidth:2});
+    drawLandmarks(ctx, results.poseLandmarks, {color:'#ffb86b', lineWidth:1});
+  }
+
+  if(!running || !results.poseLandmarks){
+    // still check hand-out for tired popup when not running
+    if(lastHandsResult?.multiHandLandmarks?.length === 0){
+      // nothing
+    }
+    ctx.restore(); return;
+  }
+
+  const lm = results.poseLandmarks;
+  const nose = getPt(lm[0]);
+  const leftShoulder = getPt(lm[11]), rightShoulder = getPt(lm[12]);
+  const leftElbow = getPt(lm[13]), rightElbow = getPt(lm[14]);
+  const leftWrist = getPt(lm[15]), rightWrist = getPt(lm[16]);
+  const leftHip = getPt(lm[23]), rightHip = getPt(lm[24]);
+  const leftKnee = getPt(lm[25]), rightKnee = getPt(lm[26]);
+  const leftAnkle = getPt(lm[27]), rightAnkle = getPt(lm[28]);
+
+  const shoulder = { x: (leftShoulder.x + rightShoulder.x)/2, y: (leftShoulder.y + rightShoulder.y)/2 };
+  const hip = { x: (leftHip.x + rightHip.x)/2, y: (leftHip.y + rightHip.y)/2 };
+
+  // baseline nose Y initial (few frames)
+  if(baselineY === null){
+    baselineSum += nose.y; baselineInitSamples++;
+    if(baselineInitSamples >= 6) baselineY = baselineSum / baselineInitSamples;
+    ctx.restore(); return;
+  }
+
+  if(frameLocked){
+    lockTimer++;
+    if(lockTimer > 10){ frameLocked=false; lockTimer=0; }
+  }
+
+  // ---------- DETEKSI JATUH OTOMATIS ----------
+  if (!fallDetected && detectFall(lm)) {
+    fallDetected = true;
+    showEmergencyAlarm();
+    log('🚨 JATUH TERDETEKSI! Alarm darurat diaktifkan.');
+  }
+
+  // ---------- Features / heuristics ----------
+  // PUSH-UP
+  const chestDown = nose.y > shoulder.y + canvas.height * 0.08;
+  const chestUp = nose.y < shoulder.y + canvas.height * 0.025;
+
+  // JUMPING JACK
+  const wristDistance = Math.abs(leftWrist.x - rightWrist.x);
+  const armOpen = wristDistance > canvas.width * 0.25;
+  const armClose = wristDistance < canvas.width * 0.12;
+
+  // SQUAT JUMP
+  const kneeY = (leftKnee.y + rightKnee.y)/2;
+  const downSquat = (kneeY - hip.y) > canvas.height * 0.21;
+  const upSquat = (kneeY - hip.y) < canvas.height * 0.16;
+
+  // HIGH KNEES - detect each leg when knee is raised above a threshold relative to hip
+  const leftHighKnee = leftKnee.y < hip.y - canvas.height * 0.07; // smaller y means knee higher on screen
+  const rightHighKnee = rightKnee.y < hip.y - canvas.height * 0.07;
+
+  // BICEPS CURL - use elbow angle (shoulder-elbow-wrist), curl when angle small (<70), extend when >150
+  const leftElbowAngle = angleDeg(leftShoulder, leftElbow, leftWrist);
+  const rightElbowAngle = angleDeg(rightShoulder, rightElbow, rightWrist);
+  const leftCurl = leftElbowAngle < 80; // curling
+  const leftExtend = leftElbowAngle > 140;
+  const rightCurl = rightElbowAngle < 80;
+  const rightExtend = rightElbowAngle > 140;
+
+  // HAND-OUT (tired) detection (hands raised above head level)
+  const headY = nose.y;
+  const threshold = headY - canvas.height * 0.30;
+  let handUp = false;
+  if(lastHandsResult?.multiHandLandmarks?.length){
+    for(const hand of lastHandsResult.multiHandLandmarks){
+      const ys = hand.map(p => getPt(p).y);
+      const topY = Math.min(...ys);
+      if(topY < threshold) handUp = true;
+    }
+  }
+  if(!handUp){
+    if(leftWrist.y < threshold || rightWrist.y < threshold) handUp = true;
+  }
+  if(handUp && !tiredPopupShown){
+    showTiredWarning();
+    tiredPopupShown = true;
+  }
+
+  // --------- Mode-specific logic ----------
+  function countPush(){
+    if(frameLocked) return;
+    if(pushState==='up' && chestDown) pushState='down';
+    if(pushState==='down' && chestUp){
+      pushState='up'; pushCount++; pushCountEl.textContent = pushCount;
+      frameLocked=true; lockTimer=0;
+    }
+  }
+  function countJump(){
+    if(frameLocked) return;
+    if(jumpState==='down' && armOpen) jumpState='up';
+    if(jumpState==='up' && armClose){
+      jumpState='down'; jumpCount++; jumpCountEl.textContent = jumpCount;
+      frameLocked=true; lockTimer=0;
+    }
+  }
+  function countSquat(){
+    if(frameLocked) return;
+    if(squatState==='up' && downSquat) squatState='down';
+    if(squatState==='down' && upSquat){
+      squatState='up'; squatCount++; squatCountEl.textContent = squatCount;
+      frameLocked=true; lockTimer=0;
+    }
+  }
+  function countHighKnees(){
+    // left
+    if(leftHighState==='down' && leftHighKnee){
+      leftHighState='up';
+      highKneeCount++; highKneeCountEl.textContent = highKneeCount;
+      frameLocked=true; lockTimer=0;
+    }
+    if(leftHighState==='up' && !leftHighKnee) leftHighState='down';
+    // right
+    if(rightHighState==='down' && rightHighKnee){
+      rightHighState='up';
+      highKneeCount++; highKneeCountEl.textContent = highKneeCount;
+      frameLocked=true; lockTimer=0;
+    }
+    if(rightHighState==='up' && !rightHighKnee) rightHighState='down';
+  }
+  function countBiceps(){
+    // left arm
+    if(leftBicepsState==='down' && leftCurl){
+      leftBicepsState='up';
+      bicepsCount++; bicepsCountEl.textContent = bicepsCount;
+      frameLocked=true; lockTimer=0;
+    }
+    if(leftBicepsState==='up' && leftExtend) leftBicepsState='down';
+    // right arm
+    if(rightBicepsState==='down' && rightCurl){
+      rightBicepsState='up';
+      bicepsCount++; bicepsCountEl.textContent = bicepsCount;
+      frameLocked=true; lockTimer=0;
+    }
+    if(rightBicepsState==='up' && rightExtend) rightBicepsState='down';
+  }
+
+  // If mode == "all": run all detectors (but frame lock to avoid double counts in same frame)
+  if(mode === "all" && !frameLocked){
+    countPush(); countJump(); countSquat(); countHighKnees(); countBiceps();
+  } else if(mode === "push"){
+    countPush();
+  } else if(mode === "jump"){
+    countJump();
+  } else if(mode === "squat"){
+    countSquat();
+  } else if(mode === "highknees"){
+    if(!frameLocked) countHighKnees();
+  } else if(mode === "biceps"){
+    if(!frameLocked) countBiceps();
+  }
+
+  // release frame lock after some frames
+  if(frameLocked){
+    lockTimer++;
+    if(lockTimer > 8){ frameLocked=false; lockTimer=0; }
+  }
+
+  ctx.restore();
+}
+
+/* ----------- POPUP LELAH (HAND UP) ----------- */
+function showTiredWarning(){
+  const box=document.createElement("div");
+  box.className="tiredBox";
+  box.innerHTML=`Apakah anda lelah?
+    <button id="lanjutBtn">Lanjut</button>
+    <button id="stopBtn">Tidak Lanjut</button>
+  `;
+  tiredWarningContainer.appendChild(box);
+
+  document.getElementById("lanjutBtn").onclick=()=>{
+    tiredPopupShown=false;
+    box.remove();
+  };
+  document.getElementById("stopBtn").onclick=()=>{
+    resetAll();
+    tiredPopupShown=false;
+    box.remove();
+  };
+}
+
+/* ----------- WAVE RESET & EMERGENCY (simple) ----------- */
+let waveBuffer = [], WAVE_WINDOW = 20, waveTimeout = null;
+function showWaveWarning(){
+  if(waveWarningContainer.innerHTML) return;
+  const box=document.createElement('div'); box.className='warningBox';
+  box.innerHTML = `Terdeteksi melambaikan tangan — Set ulang dari awal?
+    <button id="confirmResetBtn">YA, RESET</button>
+    <button id="cancelResetBtn" class="ghost">BATAL</button>`;
+  waveWarningContainer.appendChild(box);
+  document.getElementById('confirmResetBtn').onclick = ()=>{ resetAll(); waveWarningContainer.innerHTML=''; };
+  document.getElementById('cancelResetBtn').onclick = ()=>{ waveWarningContainer.innerHTML=''; };
+  if(waveTimeout) clearTimeout(waveTimeout);
+  waveTimeout = setTimeout(()=>{ waveWarningContainer.innerHTML=''; }, 8000);
+}
+
+function showEmergencyAlarm(){
+  if(emergencyWarningContainer.innerHTML) return;
+  const box=document.createElement('div'); box.className='warningBox';
+  box.innerHTML = `🚨 DARURAT: kemungkinan jatuh terdeteksi.
+    <div style="margin-top:8px">
+      <button id="iAmFineBtn">Saya Baik-baik</button>
+      <button id="callBtn">Hubungi Darurat</button>
+    </div>`;
+  emergencyWarningContainer.appendChild(box);
+  document.getElementById('iAmFineBtn').onclick = ()=>{ 
+    emergencyWarningContainer.innerHTML=''; 
+    fallDetected = false;
+    resetAll(); 
+  };
+  document.getElementById('callBtn').onclick = ()=>{ 
+    // Langsung arahkan ke WhatsApp ketika tombol "Hubungi Darurat" ditekan
+    window.location.href = 'https://api.whatsapp.com/send/?phone=6281131112112&text&type=phone_number&app_absent=0&wame_ctl=1';
+    emergencyWarningContainer.innerHTML=''; 
+    resetAll(); 
+  };
+}
+
+/* ----------- BUTTON ACTIONS ----------- */
+startBtn.onclick = ()=>{
+  if(!cam) startCamera();
+  running = true; startBtn.textContent='Pause'; startTimer();
+};
+pauseBtn.onclick = ()=>{ running=false; startBtn.textContent='Start'; stopTimer(); };
+resetBtn.onclick = ()=>{ resetAll(); };
+
+/* ----------- INIT ----------- */
+setMode("push");
+log('Aplikasi siap. Pilih mode lalu Tekan Start.');
+</script>
+
+</body>
+</html>
