@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fitness AI Landing</title>
+
+<style>
+  body{
+    margin:0; padding:0;
+    font-family:Inter, sans-serif;
+
+    /* --- Background PENS --- */
+    background: url("Gedung-PENS.jpg") no-repeat center center/cover;
+    height:100vh;
+
+    /* Overlay gelap biar estetik */
+    position:relative;
+  }
+
+  /* Overlay gelap */
+  body::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
+    z-index:0;
+  }
+
+  /* Box tetap muncul di depan */
+  .box{
+    position:relative;
+    z-index:1;
+
+    max-width:480px;
+    padding:40px;
+    background:rgba(255,255,255,0.08);
+    border-radius:20px;
+    backdrop-filter:blur(10px);
+    box-shadow:0 4px 30px rgba(0,0,0,0.4);
+
+    color:white;
+    text-align:center;
+    margin:auto;
+    top:50%;
+    transform:translateY(-50%);
+  }
+
+  h1{ margin:0 0 10px; font-size:32px; font-weight:700; }
+  p{ color:#cbd5e1; }
+
+  button{
+    margin-top:20px;
+    padding:14px 24px;
+    font-size:18px;
+    font-weight:700;
+    border-radius:12px;
+    border:0;
+    background:linear-gradient(90deg,#60a5fa,#3b82f6);
+    color:#0f172a;
+    cursor:pointer;
+    width:180px;
+  }
+
+  button:hover{
+    transform:scale(1.06);
+    transition:0.2s;
+  }
+
+  .btn-secondary{
+    background:linear-gradient(90deg,#a5b4fc,#818cf8);
+  }
+
+  /* Modal Background */
+  .modal{
+    display:none;
+    position:fixed;
+    z-index:99;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter:blur(4px);
+    align-items:center;
+    justify-content:center;
+  }
+
+  .modal-content{
+    background:#0b1220;
+    padding:30px;
+    border-radius:16px;
+    width:90%;
+    max-width:420px;
+    text-align:center;
+    box-shadow:0 0 20px rgba(0,0,0,0.4);
+  }
+
+  .modal img{
+    width:160px;
+    margin-bottom:20px;
+  }
+
+  .close-btn{
+    margin-top:20px;
+    background:#e2e8f0;
+    color:#0f172a;
+  }
+
+  /* ⭐ Tambahan warna text Tentang Kami */
+  .modal-content h2,
+  .modal-content h3{
+    color:#e3ff11;
+  }
+
+  .modal-content p.left{
+    color:#e2e8f0;
+    text-align:left;
+    line-height:1.6;
+    font-size:16px;
+  }
+
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h1>Fitness AI Counter</h1>
+  <p>Menghitung Push-up, Jumping-Jack, dan Skot-Jump secara otomatis menggunakan AI + MediaPipe.</p>
+
+  <button onclick="location.href='ARfix.html'">Mulai</button>
+  <button class="btn-secondary" onclick="openModal()">Tentang Kami</button>
+</div>
+
+<!-- MODAL TENTANG KAMI -->
+<div id="aboutModal" class="modal">
+  <div class="modal-content">
+
+    <img src="pens.png" alt="Logo PENS">
+
+    <h2>Kelompok Kami</h2>
+    <p class="left">
+      1. Mochammad Kevin Ferdianto [Programmer]<br>
+      2. Belinda Prameswari [Programmer]<br>
+      3. Putri Isnaini Jaya Miftahul Jannah [Project Manager]<br>
+      4. Azzahra Raffa Nabila [Technical Writter]<br>
+      5. Ni Made Ayu Zenska Kusuma Dyota [Technical Writter]<br>
+      6. Muhammad Iqbal Dzikran Kuncoro [Research]
+    </p>
+
+    <h2>Pembimbing:</h2>
+    <p class="left">
+      1. Sritrusta Sukaridhoto, S.T., Ph.DD<br>
+      2. Faris Saifullah D4 IT
+    </p>
+
+    <button class="close-btn" onclick="closeModal()">Tutup</button>
+  </div>
+</div>
+
+<script>
+  function openModal(){
+    document.getElementById("aboutModal").style.display = "flex";
+  }
+  function closeModal(){
+    document.getElementById("aboutModal").style.display = "none";
+  }
+</script>
+
+</body>
+</html>
